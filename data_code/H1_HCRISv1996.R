@@ -1,4 +1,3 @@
-if (!require("pacman")) install.packages("pacman")
 pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, stringr, readxl, data.table, gdata, readr)
 
 ## List variables and locations
@@ -62,4 +61,4 @@ for (i in 1998:2011) {
   }
   
 }
-write_rds(final.hcris.v1996,"data/output/HCRIS_Data_v1996.rds")
+write_rds(final.hcris.v1996,'data/output/HCRIS_Data_v1996.rds')
