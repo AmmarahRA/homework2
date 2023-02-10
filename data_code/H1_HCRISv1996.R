@@ -25,11 +25,11 @@ colnames(hcris.vars)=c("variable","WKSHT_CD","LINE_NUM","CLMN_NUM","source")
 ## Pull relevant data
 
 for (i in 1998:2011) {
-  HCRIS.alpha=read_csv(paste0("data/input/HCRIS_v1996/HospitalFY",i,"/hosp_",i,"_ALPHA.CSV"),
+  HCRIS.alpha=read_csv(paste0("data/input/HCRIS_v_1996/HospitalFY",i,"_/hosp_",i,"_ALPHA.CSV"),
                        col_names=c('RPT_REC_NUM','WKSHT_CD','LINE_NUM','CLMN_NUM','ITM_VAL_NUM'))
-  HCRIS.numeric=read_csv(paste0("data/input/HCRIS_v1996/HospitalFY",i,"/hosp_",i,"_NMRC.CSV"),
+  HCRIS.numeric=read_csv(paste0("data/input/HCRIS_v_1996/HospitalFY",i,"_/hosp_",i,"_NMRC.CSV"),
                          col_names=c('RPT_REC_NUM','WKSHT_CD','LINE_NUM','CLMN_NUM','ITM_VAL_NUM'))
-  HCRIS.report=read_csv(paste0("data/input/HCRIS_v1996/HospitalFY",i,"/hosp_",i,"_RPT.CSV",sep=""),
+  HCRIS.report=read_csv(paste0("data/input/HCRIS_v_1996/HospitalFY",i,"_/hosp_",i,"_RPT.CSV",sep=""),
                         col_names=c('RPT_REC_NUM','PRVDR_CTRL_TYPE_CD','PRVDR_NUM','NPI',
                                     'RPT_STUS_CD','FY_BGN_DT','FY_END_DT','PROC_DT',
                                     'INITL_RPT_SW','LAST_RPT_SW','TRNSMTL_NUM','FI_NUM',
@@ -61,4 +61,4 @@ for (i in 1998:2011) {
   }
   
 }
-write_rds(final.hcris.v1996,'data/output/HCRIS_Data_v1996.rds')
+write_rds(final.hcris.v1996,"data/output/HCRIS_Data_v_1996.rds")
