@@ -60,8 +60,6 @@ duplicate.hcris =
   group_by(provider_number, fyear) %>%
   mutate(total_days=sum(time_diff))
 
-write_rds(duplicate.hcris,'data/output/duplicate_hcris.rds')
-
 ## if the elapsed time within a fy sums to around 365, then just take the total of the two
 ## this will be the second set of hospitals in the final dataset
 unique.hcris2 = 
