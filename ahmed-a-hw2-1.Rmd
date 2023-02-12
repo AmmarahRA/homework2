@@ -1,0 +1,149 @@
+---
+title: 'Homework 2 - Research in Health Economics'
+author: "Ammarah Ahmed"
+date: ""
+output: pdf_document 
+---
+
+```{r setup, include=FALSE}
+pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, stringr, readxl, data.table, gdata, readr,scales, kableExtra, lemon, imputeTS)
+```
+
+```{r, warning = FALSE, echo = FALSE, message = FALSE}
+knit_print.data.frame <- lemon_print
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning = FALSE, fig.width = 16/2, fig.height = 9/2, tidy.opts=list(width.cutoff=60), tidy=TRUE)
+```
+
+```{r, include=FALSE}
+final.hcris.data<- readRDS("data/output/HCRIS_Data.rds")
+```
+
+#Question 1 
+
+```{r, include=FALSE}
+multiple_reports_table<- final.hcris.data %>% group_by(street, year) %>% 
+  summarise(count = n()) %>%
+  filter(count > 1) %>% 
+  group_by(year) %>% 
+  summarise(count = n())
+```
+
+```{r, include=FALSE}
+multiple_reports<- sum(multiple_reports_table$count)
+```
+
+```{r}
+paste0(multiple_reports , " hospitals filed more than one report per year. ")
+```
+
+```{r, include=FALSE}
+fig.mult.rep<- multiple_reports_table %>% ggplot(aes(x = year, y = count)) +
+  geom_line() + 
+  labs(title = 'Number of Hospitals with Multiple Reports', x = 'Year', y = 'Number of hospitals') +
+  theme_minimal()
+```
+
+```{r}
+fig.mult.rep
+```
+
+#Question 2
+
+```{r, include=FALSE}
+medicare_id_table<- final.hcris.data %>% group_by(provider_number) %>% count() 
+```
+```{r, include=FALSE}
+medicare_id<-nrow(medicare_id_table)
+```
+
+```{r}
+paste0("There are ", medicare_id, " unique Medicare IDs")
+```
+
+#Question 3
+
+```{r, include=FALSE}
+tot_charges <- final.hcris.data %>% ggplot(aes(x = as.factor(year), y = tot_charges)) +
+  geom_violin(trim = FALSE) +
+  labs(title = 'Distribution of Total Charges', x = 'Year', y = 'Total Charges') +
+  theme_minimal()
+```
+
+```{r}
+tot_charges
+```
+
+#Question 4
+
+```{r, include=FALSE}
+final.hcris.data2<- final.hcris.data %>%
+  mutate(discount_factor = 1-tot_discounts/tot_charges,
+          price_num = (ip_charges + icu_charges + ancillary_charges)*discount_factor - tot_mcare_payment,
+          price_denom = tot_discharges - mcare_discharges,
+          est_price = price_num/price_denom)
+```
+```{r, include=FALSE}
+est_prices<- final.hcris.data2 %>% 
+  ggplot(aes(x = as.factor(year), y = est_price)) +
+  geom_violin(trim = FALSE) + 
+  labs(title = 'Distribution of Estimated Prices', x = 'Year', y = 'Estimated Prices') +
+  theme_bw()
+```
+
+```{r}
+est_prices
+```
+
+#Question 5
+
+```{r, include=FALSE}
+hcris_2012 <- final.hcris.data2 %>% filter(year == 2012)
+```
+```{r, include=FALSE}
+hcris_2012$penalty <- ifelse(hcris_2012$hrrp_payment + hcris_2012$hvbp_payment < 0, 1,0)
+```
+```{r, include=FALSE}
+pen_price<- hcris_2012 %>%
+  filter(!is.na(penalty)) %>% 
+  filter(penalty == 1) %>%
+  group_by(penalty) %>% 
+  summarise(price = mean(est_price, na.rm = TRUE))
+```
+```{r, include=FALSE}
+non_pen_price <- hcris_2012 %>%
+  filter(!is.na(penalty)) %>% 
+  filter(penalty == 0) %>%
+  group_by(penalty) %>% 
+  summarise(price = mean(est_price, na.rm = TRUE))
+```
+
+```{r}
+paste0("The average price amongst penalised hospitals is $", pen_price$price, " and the average price amongst non-penalised hospitals is $", non_pen_price$price)
+```
+
+#Question 6 
+
+```{r, include=FALSE}
+table_6 <- hcris_2012 %>% 
+  group_by(street, penalty) %>% 
+  summarise(avg_price = mean(est_price, na.rm = TRUE), quartile = quantile(beds, na.rm = TRUE)) %>%
+  group_by(penalty) 
+
+```
+```{r}
+options(knitr.kable.NA = 0)
+knitr::kable(table_6, 
+             col.names=c("Hospital","Penalty", "Average Price", "Quartile"),
+             format.args = list(big.mark=","), caption = "Average Price for Treated and Control Groups")
+```
+
+#Question 7
+
+
+
+
+
+
+
+
+
