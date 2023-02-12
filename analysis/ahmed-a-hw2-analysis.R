@@ -29,9 +29,39 @@ tot_charges <- final.hcris.data %>% ggplot(aes(x = as.factor(year), y = tot_char
   labs(title = 'Distribution of Total Charges', x = 'Year', y = 'Total Charges') +
   theme_minimal()
 
+#4
 
+final.hcris.data2<- final.hcris.data %>%
+  mutate(discount_factor = 1-tot_discounts/tot_charges,
+          price_num = (ip_charges + icu_charges + ancillary_charges)*discount_factor - tot_mcare_payment,
+          price_denom = tot_discharges - mcare_discharges,
+          est_price = price_num/price_denom)
 
+est_prices<- final.hcris.data2 %>% 
+  ggplot(aes(x = as.factor(year), y = est_price)) +
+  geom_violin(trim = FALSE) + 
+  labs(title = 'Distribution of Estimated Prices', x = 'Year', y = 'Estimated Prices') +
+  theme_bw()
+  
+#5
 
+hcris_2012 <- final.hcris.data2 %>% filter(year == 2012)
+
+hcris_2012$penalty <- ifelse(hcris_2012$hrrp_payment + hcris_2012$hvbp_payment < 0, 1,0)
+
+pen_price<- hcris_2012 %>%
+  filter(!is.na(penalty)) %>% 
+  filter(penalty == 1) %>%
+  group_by(penalty) %>% 
+  summarise(price = mean(est_price, na.rm = TRUE))
+
+non_pen_price <- hcris_2012 %>%
+  filter(!is.na(penalty)) %>% 
+  filter(penalty == 0) %>%
+  group_by(penalty) %>% 
+  summarise(price = mean(est_price, na.rm = TRUE))
+
+#6 
 
 
 
