@@ -63,7 +63,12 @@ non_pen_price <- hcris_2012 %>%
 
 #6 
 
+quantile(hcris_2012$beds, na.rm = TRUE)
 
+hcris_2012$l_quart <- 
+  
+#hcris_2012$u_quart <- ifelse(hcris_2012$u_quart <= quantile(hcris_2012$beds, probs = 0.75, na.rm = TRUE), 1,0)
 
+#hcris_2012$m_quart <- ifelse(hcris_2012$m_quart <= quantile(hcris_2012$beds, probs = 0.50, na.rm = TRUE), 1,0)
 
 
