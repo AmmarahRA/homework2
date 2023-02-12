@@ -62,13 +62,17 @@ non_pen_price <- hcris_2012 %>%
   summarise(price = mean(est_price, na.rm = TRUE))
 
 #6 
-
 quantile(hcris_2012$beds, na.rm = TRUE)
 
-hcris_2012$l_quart <- 
-  
-#hcris_2012$u_quart <- ifelse(hcris_2012$u_quart <= quantile(hcris_2012$beds, probs = 0.75, na.rm = TRUE), 1,0)
+table_6 <- hcris_2012 %>% 
+  group_by(street, penalty) %>% 
+  summarise(avg_price = mean(est_price, na.rm = TRUE), quartile = quantile(beds, na.rm = TRUE)) %>%
+  group_by(penalty) 
 
-#hcris_2012$m_quart <- ifelse(hcris_2012$m_quart <= quantile(hcris_2012$beds, probs = 0.50, na.rm = TRUE), 1,0)
+table_6
+  
+#7
+
+
 
 
