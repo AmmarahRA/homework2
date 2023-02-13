@@ -23,19 +23,17 @@ medicare_id_table<- final.hcris.data %>% group_by(provider_number) %>% count()
 medicare_id<-nrow(medicare_id_table)
 
 #3
-
 tot_charges <- final.hcris.data %>% ggplot(aes(x = as.factor(year), y = tot_charges)) +
   geom_violin(trim = FALSE) +
   labs(title = 'Distribution of Total Charges', x = 'Year', y = 'Total Charges') +
   theme_minimal()
 
 #4
-
 final.hcris.data2<- final.hcris.data %>%
   mutate(discount_factor = 1-tot_discounts/tot_charges,
-          price_num = (ip_charges + icu_charges + ancillary_charges)*discount_factor - tot_mcare_payment,
-          price_denom = tot_discharges - mcare_discharges,
-          est_price = price_num/price_denom)
+         price_num = (ip_charges + icu_charges + ancillary_charges)*discount_factor - tot_mcare_payment,
+         price_denom = tot_discharges - mcare_discharges,
+         est_price = price_num/price_denom)
 
 final.hcris.data2 <- final.hcris.data2 %>%
   ungroup() %>% 
