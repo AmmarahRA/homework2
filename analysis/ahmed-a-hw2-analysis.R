@@ -108,8 +108,9 @@ summary(m.mahala)
 
 #Inverse propensity weighting 
 
-logit.model <- glm(penalty ~ quartile_1, quartile_2, quartile_3,
+logit.model <- glm(penalty ~ quartile,
                    family = binomial, data = hcris_2012)
+
 ps <- fitted(logit.model)
 
 m.inv.ps <- Matching::Match(Y=hcris_2012$est_price,
