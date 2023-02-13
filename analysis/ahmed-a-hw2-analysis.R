@@ -37,17 +37,30 @@ final.hcris.data2<- final.hcris.data %>%
           price_denom = tot_discharges - mcare_discharges,
           est_price = price_num/price_denom)
 
+final.hcris.data2 <- final.hcris.data2 %>%
+  ungroup() %>% 
+  filter(price_denom>100, !is.na(price_denom), 
+         price_num>0, !is.na(price_num),
+         est_price<100000, 
+         beds>30) %>%
+  mutate( hvbp_payment = ifelse(is.na(hvbp_payment),0,hvbp_payment),
+          hrrp_payment = ifelse(is.na(hrrp_payment),0,abs(hrrp_payment)),
+          penalty = (hvbp_payment-hrrp_payment<0))
+
 est_prices<- final.hcris.data2 %>% 
   ggplot(aes(x = as.factor(year), y = est_price)) +
   geom_violin(trim = FALSE) + 
   labs(title = 'Distribution of Estimated Prices', x = 'Year', y = 'Estimated Prices') +
   theme_bw()
-  
+
 #5
 
 hcris_2012 <- final.hcris.data2 %>% filter(year == 2012)
 
-hcris_2012$penalty <- ifelse(hcris_2012$hrrp_payment + hcris_2012$hvbp_payment < 0, 1,0)
+hcris_2012 <- hcris_2012 %>% mutate(penalty = (hvbp_payment - hrrp_payment<0))              
+
+
+#hrrp absolute value used as it should always be negative but not always recorded as such. any hrrp is payment
 
 pen_price<- hcris_2012 %>%
   filter(!is.na(penalty)) %>% 
@@ -61,6 +74,8 @@ non_pen_price <- hcris_2012 %>%
   group_by(penalty) %>% 
   summarise(price = mean(est_price, na.rm = TRUE))
 
+#filter data!
+
 #6 
 hcris_2012$quartile <- ntile(hcris_2012$beds, 4)
 
@@ -72,10 +87,14 @@ hcris_2012$quartile_4 <- ifelse(hcris_2012$quartile == 4, 1,0)
 table_6 <- hcris_2012 %>% filter(!is.na(penalty)) %>%
   group_by(quartile, penalty) %>%
   summarise(avg_price = mean(est_price, na.rm = TRUE))
+
+hcris_2012 <- mutate()
   
 #7
 
 hcris_2012_filt <- hcris_2012[!is.na(hcris_2012$est_price) & !is.na(hcris_2012$penalty) & !is.na(hcris_2012$quartile),]
+
+#lp.covs <- hcris_2012_filt %>% select(beds, mcaid_discharges)
 
 #Nearest neighbour matching with inverse variance distance
 
@@ -99,8 +118,8 @@ summary(m.mahala)
 
 #Inverse propensity weighting 
 
-logit.model <- glm(penalty ~ beds + mcaid_discharges + ip_charges + mcare_discharges +
-                     tot_mcare_payment, family=binomial, data=hcris_2012_filt)
+logit.model <- glm(penalty ~ quartile_1, quartile_2, quartile_3,
+                   family=binomial, data=hcris_2012_filt)
 ps <- fitted(logit.model)
 
 m.inv.ps <- Matching::Match(Y=hcris_2012_filt$est_price,
@@ -110,18 +129,21 @@ m.inv.ps <- Matching::Match(Y=hcris_2012_filt$est_price,
                            estimand="ATE")
 summary(m.inv.ps)
 
+
+
+
 #Simple linear regression 
 
 reg1.dat <- hcris_2012_filt %>% filter(penalty == 1)
-reg1 <- lm(est_price ~ beds, data=reg1.dat)
+reg1 <- lm(est_price ~ quartile, data=reg1.dat)
 
-reg0.dat <- hcris_2012_filt %>% filter(penalty==0)
-reg0 <- lm(est_price ~ beds, data=reg0.dat)
+reg0.dat <- hcris_2012_filt %>% filter(penalty == 0)
+reg0 <- lm(est_price ~ quartile, data=reg0.dat)
 
 pred1 <- predict(reg1,new=hcris_2012_filt)
 pred0 <- predict(reg0,new=hcris_2012_filt)
 
 mean(pred1-pred0)
 
-
+#save.image("Hw2_workpsace.Rdata")
 
