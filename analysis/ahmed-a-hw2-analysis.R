@@ -29,6 +29,7 @@ tot_charges <- final.hcris.data %>% ggplot(aes(x = as.factor(year), y = tot_char
   theme_minimal()
 
 #4
+
 final.hcris.data2<- final.hcris.data %>%
   mutate(discount_factor = 1-tot_discounts/tot_charges,
          price_num = (ip_charges + icu_charges + ancillary_charges)*discount_factor - tot_mcare_payment,
