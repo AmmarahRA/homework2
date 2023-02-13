@@ -184,8 +184,9 @@ summary(m.mahala)
 ```
 
 ```{r, include=FALSE}
-logit.model <- glm(penalty ~ quartile_1, quartile_2, quartile_3,
-                   family=binomial, data=hcris_2012)
+logit.model <- glm(penalty ~ quartile,
+                   family = binomial, data = hcris_2012)
+
 ps <- fitted(logit.model)
 ```
 ```{r, include=FALSE}
@@ -195,8 +196,9 @@ m.inv.ps <- Matching::Match(Y=hcris_2012$est_price,
                            M=1,
                            estimand="ATE")
 ```
-
-
+```{r}
+summary(m.inv.ps)
+```
 
 ```{r, include=FALSE}
 reg1.dat <- hcris_2012 %>% filter(penalty == 1)
@@ -223,16 +225,5 @@ I am unable to answer this question as some of my codes did not run
 I am unsure as I do not think my codes are correct
 
 #Question 10
-Working with this dataset was interesting. I learned more about applying the concepts we learned in class and was able to get more comfortable using R. However, it was confuding at times as I am still unclear about the codes to find ATE and struggled to write the codes to get to the required answers.
+Working with this dataset was interesting. I learned more about applying the concepts we learned in class and was able to get more comfortable using R. However, it was confusing at times as I am still unclear about the codes to find ATE and struggled to write the codes to get to the required answers.
 
-#error to knit
-I am unabke to knit to pdf as it shows an error in line 143 even though I can run the code. Error shown as: 
-
-Error in `vectbl_as_row_location()`:
-! Can't subset rows with `i`.
-x Logical subscript `i` must be size 1 or 6140, not 0.
-Backtrace:
-  1. ...[]
- 11. vctrs (local) `<fn>`()
- 12. vctrs:::stop_indicator_size(...)
-Execution halted
