@@ -209,3 +209,14 @@ I am unsure as I do not think my codes are correct
 #Question 10
 Working with this dataset was interesting. I learned more about applying the concepts we learned in class and was able to get more comfortable using R. However, it was confuding at times as I am still unclear about the codes to find ATE and struggled to write the codes to get to the required answers.
 
+#error to knit
+I am unabke to knit to pdf as it shows an error in line 143 even though I can run the code. Error shown as: 
+
+Error in `vectbl_as_row_location()`:
+! Can't subset rows with `i`.
+x Logical subscript `i` must be size 1 or 6140, not 0.
+Backtrace:
+  1. ...[]
+ 11. vctrs (local) `<fn>`()
+ 12. vctrs:::stop_indicator_size(...)
+Execution halted
