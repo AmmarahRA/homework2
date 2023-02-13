@@ -139,9 +139,75 @@ knitr::kable(table_6,
 
 #Question 7
 
+```{r, include=FALSE}
+hcris_2012_filt <- hcris_2012[!is.na(hcris_2012$est_price) & !is.na(hcris_2012$penalty) & !is.na(hcris_2012$quartile),]
+```
 
+```{r, include=FALSE}
+m.inv.var <- Matching::Match(Y = hcris_2012_filt$est_price,
+                             Tr = hcris_2012_filt$penalty,
+                             X= hcris_2012_filt$quartile,
+                             M = 1,
+                             Weight = 1,
+                             estimand = "ATE")
+```
+```{r}
+summary(m.inv.var)
+```
 
+```{r, include=FALSE}
+m.mahala <- Matching::Match(Y = hcris_2012_filt$est_price, 
+                            Tr = hcris_2012_filt$penalty,
+                            X = hcris_2012_filt$quartile,
+                            M = 1,
+                            Weight = 2,
+                            estimand = "ATE")
+```
+```{r}
+summary(m.mahala)
+```
 
+```{r, include=FALSE}
+logit.model <- glm(penalty ~ beds + mcaid_discharges + ip_charges + mcare_discharges +
+                     tot_mcare_payment, family=binomial, data=hcris_2012_filt)
+ps <- fitted(logit.model)
+```
+```{r, include=FALSE}
+m.inv.ps <- Matching::Match(Y=hcris_2012_filt$est_price,
+                           Tr=hcris_2012_filt$penalty,
+                           X=ps,
+                           M=1,
+                           estimand="ATE")
+```
+
+I get an error when using the inverse propensity weight method
+
+```{r, include=FALSE}
+reg1.dat <- hcris_2012_filt %>% filter(penalty == 1)
+reg1 <- lm(est_price ~ beds, data=reg1.dat)
+```
+```{r, include=FALSE}
+reg0.dat <- hcris_2012_filt %>% filter(penalty==0)
+reg0 <- lm(est_price ~ beds, data=reg0.dat)
+```
+```{r, include=FALSE}
+pred1 <- predict(reg1,new=hcris_2012_filt)
+pred0 <- predict(reg0,new=hcris_2012_filt)
+```
+```{r}
+mean(pred1-pred0)
+```
+
+I was unable to make a table as I got an error in one the above codes. 
+
+#Question 8
+I am unable to answer this question as some of my codes did not run 
+
+#Question 9
+I am unsure as I do not think my codes are correct
+
+#Question 10
+Working with this dataset was interesting. I learned more about applying the concepts we learned in class and was able to get more comfortable using R. However, it was confuding at times as I am still unclear about the codes to find ATE and struggled to write the codes to get to the required answers.
 
 
 
