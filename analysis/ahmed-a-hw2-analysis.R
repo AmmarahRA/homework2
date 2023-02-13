@@ -62,17 +62,66 @@ non_pen_price <- hcris_2012 %>%
   summarise(price = mean(est_price, na.rm = TRUE))
 
 #6 
-quantile(hcris_2012$beds, na.rm = TRUE)
+hcris_2012$quartile <- ntile(hcris_2012$beds, 4)
 
-table_6 <- hcris_2012 %>% 
-  group_by(street, penalty) %>% 
-  summarise(avg_price = mean(est_price, na.rm = TRUE), quartile = quantile(beds, na.rm = TRUE)) %>%
-  group_by(penalty) 
-
-table_6
+hcris_2012$quartile_1 <- ifelse(hcris_2012$quartile == 1, 1,0)
+hcris_2012$quartile_2 <- ifelse(hcris_2012$quartile == 2, 1,0)
+hcris_2012$quartile_3 <- ifelse(hcris_2012$quartile == 3, 1,0)
+hcris_2012$quartile_4 <- ifelse(hcris_2012$quartile == 4, 1,0)
+  
+table_6 <- hcris_2012 %>% filter(!is.na(penalty)) %>%
+  group_by(quartile, penalty) %>%
+  summarise(avg_price = mean(est_price, na.rm = TRUE))
   
 #7
 
+hcris_2012_filt <- hcris_2012[!is.na(hcris_2012$est_price) & !is.na(hcris_2012$penalty) & !is.na(hcris_2012$quartile),]
+
+#Nearest neighbour matching with inverse variance distance
+
+m.inv.var <- Matching::Match(Y = hcris_2012_filt$est_price,
+                             Tr = hcris_2012_filt$penalty,
+                             X= hcris_2012_filt$quartile,
+                             M = 1,
+                             Weight = 1,
+                             estimand = "ATE")
+summary(m.inv.var)
+
+#Nearest neighbour matching with Mahalanobis distance 
+
+m.mahala <- Matching::Match(Y = hcris_2012_filt$est_price, 
+                            Tr = hcris_2012_filt$penalty,
+                            X = hcris_2012_filt$quartile,
+                            M = 1,
+                            Weight = 2,
+                            estimand = "ATE")
+summary(m.mahala)
+
+#Inverse propensity weighting 
+
+logit.model <- glm(penalty ~ beds + mcaid_discharges + ip_charges + mcare_discharges +
+                     tot_mcare_payment, family=binomial, data=hcris_2012_filt)
+ps <- fitted(logit.model)
+
+m.inv.ps <- Matching::Match(Y=hcris_2012_filt$est_price,
+                           Tr=hcris_2012_filt$penalty,
+                           X=ps,
+                           M=1,
+                           estimand="ATE")
+summary(m.inv.ps)
+
+#Simple linear regression 
+
+reg1.dat <- hcris_2012_filt %>% filter(penalty == 1)
+reg1 <- lm(est_price ~ beds, data=reg1.dat)
+
+reg0.dat <- hcris_2012_filt %>% filter(penalty==0)
+reg0 <- lm(est_price ~ beds, data=reg0.dat)
+
+pred1 <- predict(reg1,new=hcris_2012_filt)
+pred0 <- predict(reg0,new=hcris_2012_filt)
+
+mean(pred1-pred0)
 
 
 
