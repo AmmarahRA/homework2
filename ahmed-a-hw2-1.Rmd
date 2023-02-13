@@ -173,11 +173,11 @@ logit.model <- glm(penalty ~ beds + mcaid_discharges + ip_charges + mcare_discha
 ps <- fitted(logit.model)
 ```
 ```{r, include=FALSE}
-m.inv.ps <- Matching::Match(Y=hcris_2012_filt$est_price,
-                           Tr=hcris_2012_filt$penalty,
-                           X=ps,
-                           M=1,
-                           estimand="ATE")
+#m.inv.ps <- Matching::Match(Y=hcris_2012_filt$est_price,
+                           #Tr=hcris_2012_filt$penalty,
+                           #X=ps,
+                           #M=1,
+                           #estimand="ATE")
 ```
 
 I get an error when using the inverse propensity weight method
