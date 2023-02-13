@@ -57,8 +57,7 @@ est_prices<- final.hcris.data2 %>%
 
 hcris_2012 <- final.hcris.data2 %>% filter(year == 2012)
 
-hcris_2012 <- hcris_2012 %>% mutate(penalty = (hvbp_payment - hrrp_payment<0))              
-
+hcris_2012$penalty <- ifelse(hcris_2012$hvbp_payment - hcris_2012$hrrp_payment < 0, 1,0)            
 
 #hrrp absolute value used as it should always be negative but not always recorded as such. any hrrp is payment
 
@@ -74,8 +73,6 @@ non_pen_price <- hcris_2012 %>%
   group_by(penalty) %>% 
   summarise(price = mean(est_price, na.rm = TRUE))
 
-#filter data!
-
 #6 
 hcris_2012$quartile <- ntile(hcris_2012$beds, 4)
 
@@ -87,20 +84,14 @@ hcris_2012$quartile_4 <- ifelse(hcris_2012$quartile == 4, 1,0)
 table_6 <- hcris_2012 %>% filter(!is.na(penalty)) %>%
   group_by(quartile, penalty) %>%
   summarise(avg_price = mean(est_price, na.rm = TRUE))
-
-hcris_2012 <- mutate()
   
 #7
 
-hcris_2012_filt <- hcris_2012[!is.na(hcris_2012$est_price) & !is.na(hcris_2012$penalty) & !is.na(hcris_2012$quartile),]
-
-#lp.covs <- hcris_2012_filt %>% select(beds, mcaid_discharges)
-
 #Nearest neighbour matching with inverse variance distance
 
-m.inv.var <- Matching::Match(Y = hcris_2012_filt$est_price,
-                             Tr = hcris_2012_filt$penalty,
-                             X= hcris_2012_filt$quartile,
+m.inv.var <- Matching::Match(Y = hcris_2012$est_price,
+                             Tr = hcris_2012$penalty,
+                             X= hcris_2012 %>% select(quartile_1, quartile_2, quartile_3),
                              M = 1,
                              Weight = 1,
                              estimand = "ATE")
@@ -108,9 +99,9 @@ summary(m.inv.var)
 
 #Nearest neighbour matching with Mahalanobis distance 
 
-m.mahala <- Matching::Match(Y = hcris_2012_filt$est_price, 
-                            Tr = hcris_2012_filt$penalty,
-                            X = hcris_2012_filt$quartile,
+m.mahala <- Matching::Match(Y = hcris_2012$est_price, 
+                            Tr = hcris_2012$penalty,
+                            X = hcris_2012 %>% select(quartile_1, quartile_2, quartile_3),
                             M = 1,
                             Weight = 2,
                             estimand = "ATE")
@@ -122,26 +113,23 @@ logit.model <- glm(penalty ~ quartile_1, quartile_2, quartile_3,
                    family=binomial, data=hcris_2012_filt)
 ps <- fitted(logit.model)
 
-m.inv.ps <- Matching::Match(Y=hcris_2012_filt$est_price,
-                           Tr=hcris_2012_filt$penalty,
-                           X=ps,
+m.inv.ps <- Matching::Match(Y=hcris_2012$est_price,
+                           Tr=hcris_2012$penalty,
+                           X= ps,
                            M=1,
                            estimand="ATE")
 summary(m.inv.ps)
 
-
-
-
 #Simple linear regression 
 
-reg1.dat <- hcris_2012_filt %>% filter(penalty == 1)
+reg1.dat <- hcris_2012 %>% filter(penalty == 1)
 reg1 <- lm(est_price ~ quartile, data=reg1.dat)
 
-reg0.dat <- hcris_2012_filt %>% filter(penalty == 0)
+reg0.dat <- hcris_2012 %>% filter(penalty == 0)
 reg0 <- lm(est_price ~ quartile, data=reg0.dat)
 
-pred1 <- predict(reg1,new=hcris_2012_filt)
-pred0 <- predict(reg0,new=hcris_2012_filt)
+pred1 <- predict(reg1,new=hcris_2012)
+pred0 <- predict(reg0,new=hcris_2012)
 
 mean(pred1-pred0)
 
