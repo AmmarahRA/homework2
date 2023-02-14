@@ -15,6 +15,10 @@ knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning = FALSE, fig.width = 
 ```
 
 ```{r, include=FALSE}
+load("Hw2_workpsace.Rdata")
+```
+
+```{r, include=FALSE}
 final.hcris.data<- readRDS("data/output/HCRIS_Data.rds")
 ```
 
@@ -167,7 +171,7 @@ m.inv.var <- Matching::Match(Y = hcris_2012$est_price,
                              Weight = 1,
                              estimand = "ATE")
 ```
-```{r}
+```{r, include=FALSE}
 summary(m.inv.var)
 ```
 
@@ -179,7 +183,7 @@ m.mahala <- Matching::Match(Y = hcris_2012$est_price,
                             Weight = 2,
                             estimand = "ATE")
 ```
-```{r}
+```{r, include=FALSE}
 summary(m.mahala)
 ```
 
@@ -190,14 +194,23 @@ logit.model <- glm(penalty ~ quartile,
 ps <- fitted(logit.model)
 ```
 ```{r, include=FALSE}
-m.inv.ps <- Matching::Match(Y=hcris_2012$est_price,
-                           Tr=hcris_2012$penalty,
-                           X= ps,
-                           M=1,
-                           estimand="ATE")
+hcris_2012_2 <- hcris_2012 %>%
+  mutate(ipw = case_when(
+    penalty==1 ~ 1/ps,
+    penalty==0 ~ 1/(1-ps),
+    TRUE ~ NA_real_
+  ))
 ```
-```{r}
-summary(m.inv.ps)
+```{r, include=FALSE}
+mean.t1 <- hcris_2012_2 %>% filter(penalty==1) %>%
+  select(est_price, ipw) %>% summarize(mean_p=weighted.mean(est_price,w=ipw))
+```
+```{r, include=FALSE}
+mean.t0 <- hcris_2012_2 %>% filter(penalty==0) %>%
+  select(est_price, ipw) %>% summarize(mean_p=weighted.mean(est_price,w=ipw))
+```
+```{r, include=FALSE}
+inv.ps<- mean.t1$mean_p - mean.t0$mean_p
 ```
 
 ```{r, include=FALSE}
@@ -212,17 +225,30 @@ reg0 <- lm(est_price ~ quartile, data=reg0.dat)
 pred1 <- predict(reg1,new=hcris_2012)
 pred0 <- predict(reg0,new=hcris_2012)
 ```
-```{r}
-mean(pred1-pred0)
+```{r, include=FALSE}
+reg_res <- mean(pred1-pred0)
 ```
 
-I was unable to make a table as I got an error in one the above codes. 
+```{r, include=FALSE}
+table_ate <- data.frame(Estimators = c("NN Matching, inverse variance", "NN Matching, mahalanobis",
+                                       "Inverse pscore weighting", "Regression"),
+                        ATE = c(m.inv.var$est, m.mahala$est, inv.ps, reg_res))
+```
+```{r}
+options(knitr.kable.NA = 0)
+knitr::kable(table_ate, 
+             col.names=c("Estimate", "ATE"),
+             format.args = list(big.mark=","), caption = "Average Treatment Effect")
+```
+ 
 
 #Question 8
-I am unable to answer this question as some of my codes did not run 
+
+The results from the different treatment effect estimators are similar. The results using the nearest neighbour matching methods are the same using both inverse variance distance and Mahalanobis distance at 199.5281. The results using inverse propensity weight and regression are more different at 161.7769 and 187.2840 respectively.  
 
 #Question 9
-I am unsure as I do not think my codes are correct
+
+
 
 #Question 10
 Working with this dataset was interesting. I learned more about applying the concepts we learned in class and was able to get more comfortable using R. However, it was confusing at times as I am still unclear about the codes to find ATE and struggled to write the codes to get to the required answers.
