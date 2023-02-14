@@ -113,17 +113,24 @@ logit.model <- glm(penalty ~ quartile,
 
 ps <- fitted(logit.model)
 
-m.inv.ps <- Matching::Match(Y=hcris_2012$est_price,
-                           Tr=hcris_2012$penalty,
-                           X= ps,
-                           M=1,
-                           estimand="ATE")
-summary(m.inv.ps)
+hcris_2012_2 <- hcris_2012 %>%
+  mutate(ipw = case_when(
+    penalty==1 ~ 1/ps,
+    penalty==0 ~ 1/(1-ps),
+    TRUE ~ NA_real_
+  ))
+
+mean.t1 <- hcris_2012_2 %>% filter(penalty==1) %>%
+  select(est_price, ipw) %>% summarize(mean_p=weighted.mean(est_price,w=ipw))
+mean.t0 <- hcris_2012_2 %>% filter(penalty==0) %>%
+  select(est_price, ipw) %>% summarize(mean_p=weighted.mean(est_price,w=ipw))
+
+inv.ps<- mean.t1$mean_p - mean.t0$mean_p
 
 #Simple linear regression 
 
 reg1.dat <- hcris_2012 %>% filter(penalty == 1)
-reg1 <- lm(est_price ~ quartile, data=reg1.dat)
+reg1 <- lm(est_price ~ quartile_1 + quartile_2 + quartile_3, data=reg1.dat)
 
 reg0.dat <- hcris_2012 %>% filter(penalty == 0)
 reg0 <- lm(est_price ~ quartile, data=reg0.dat)
@@ -131,7 +138,12 @@ reg0 <- lm(est_price ~ quartile, data=reg0.dat)
 pred1 <- predict(reg1,new=hcris_2012)
 pred0 <- predict(reg0,new=hcris_2012)
 
-mean(pred1-pred0)
+reg_res <- mean(pred1-pred0)
 
-#save.image("Hw2_workpsace.Rdata")
+table_ate <- data.frame(Estimators = c("NN Matching, inverse variance", "NN Matching, mahalanobis",
+                                       "Inverse pscore weighting", "Regression"),
+                        ATE = c(m.inv.var$est, m.mahala$est, inv.ps, reg_res))
+
+
+save.image("Hw2_workpsace.Rdata")
 
