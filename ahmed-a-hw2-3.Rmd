@@ -1,0 +1,252 @@
+---
+title: 'Homework 2 - Research in Health Economics'
+author: "Ammarah Ahmed"
+date: ""
+output: pdf_document 
+---
+
+```{r setup, include=FALSE}
+pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, stringr, readxl, data.table, gdata, readr,scales, kableExtra, lemon, imputeTS)
+```
+
+```{r, warning = FALSE, echo = FALSE, message = FALSE}
+knit_print.data.frame <- lemon_print
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning = FALSE, fig.width = 16/2, fig.height = 9/2, tidy.opts=list(width.cutoff=60), tidy=TRUE)
+```
+
+```{r, include=FALSE}
+load("Hw2_workpsace.Rdata")
+```
+
+```{r, include=FALSE}
+final.hcris.data<- readRDS("data/output/HCRIS_Data.rds")
+```
+
+# Question 1 
+
+```{r, include=FALSE}
+multiple_reports_table<- final.hcris.data %>% group_by(street, year) %>% 
+  summarise(count = n()) %>%
+  filter(count > 1) %>% 
+  group_by(year) %>% 
+  summarise(count = n())
+```
+
+```{r, include=FALSE}
+multiple_reports<- sum(multiple_reports_table$count)
+```
+
+`r multiple_reports` hospitals filed more than one report per year. 
+
+```{r, include=FALSE}
+fig.mult.rep<- multiple_reports_table %>% ggplot(aes(x = year, y = count)) +
+  geom_line() + 
+  labs(title = 'Number of Hospitals with Multiple Reports', x = 'Year', y = 'Number of hospitals') +
+  theme_minimal()
+```
+
+```{r}
+fig.mult.rep
+```
+
+#Question 2
+
+```{r, include=FALSE}
+medicare_id_table<- final.hcris.data %>% group_by(provider_number) %>% count() 
+```
+```{r, include=FALSE}
+medicare_id<-nrow(medicare_id_table)
+```
+
+There are `r medicare-id` unique Medicare IDs
+
+#Question 3
+
+```{r, include=FALSE}
+tot_charges <- final.hcris.data %>% ggplot(aes(x = as.factor(year), y = tot_charges, fill = "")) +
+  geom_violin(trim = FALSE) + scale_y_continuous(trans = "log10") +
+  labs(title = 'Distribution of Log of Total Charges', x = 'Year', y = 'Log of Total Charges') +
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 45, size = 9, hjust = 1), plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+tot_charges
+```
+
+# Question 4
+
+```{r, include=FALSE}
+final.hcris.data2<- final.hcris.data %>%
+  mutate(discount_factor = 1-tot_discounts/tot_charges,
+         price_num = (ip_charges + icu_charges + ancillary_charges)*discount_factor - tot_mcare_payment,
+         price_denom = tot_discharges - mcare_discharges,
+         est_price = price_num/price_denom)
+```
+```{r, include=FALSE}
+final.hcris.data2 <- final.hcris.data2 %>%
+  ungroup() %>% 
+  filter(price_denom>100, !is.na(price_denom), 
+         price_num>0, !is.na(price_num),
+         est_price<100000, 
+         beds>30) %>%
+  mutate( hvbp_payment = ifelse(is.na(hvbp_payment),0,hvbp_payment),
+          hrrp_payment = ifelse(is.na(hrrp_payment),0,abs(hrrp_payment)),
+          penalty = (hvbp_payment-hrrp_payment<0))
+```
+
+```{r, include=FALSE}
+est_prices<- final.hcris.data2 %>% 
+  ggplot(aes(x = as.factor(year), y = est_price, fill = "")) +
+  geom_violin(trim = FALSE) + 
+  labs(title = 'Distribution of Estimated Prices', x = 'Year', y = 'Estimated Prices') +
+  theme_bw()
+```
+
+```{r}
+est_prices
+```
+
+# Question 5
+
+```{r, include=FALSE}
+hcris_2012 <- final.hcris.data2 %>% filter(year == 2012)
+```
+```{r, include=FALSE}
+hcris_2012$penalty <- ifelse(hcris_2012$hvbp_payment - hcris_2012$hrrp_payment < 0, 1,0) 
+```
+```{r, include=FALSE}
+pen_price<- hcris_2012 %>%
+  filter(!is.na(penalty)) %>% 
+  filter(penalty == 1) %>%
+  group_by(penalty) %>% 
+  summarise(price = mean(est_price, na.rm = TRUE))
+```
+```{r, include=FALSE}
+non_pen_price <- hcris_2012 %>%
+  filter(!is.na(penalty)) %>% 
+  filter(penalty == 0) %>%
+  group_by(penalty) %>% 
+  summarise(price = mean(est_price, na.rm = TRUE))
+```
+
+The average price amongst penalised hospitals is `r round(pen_price$price)` and the average price amongst non-penalised hospitals is `r round(non_pen_price$price)`.
+
+
+# Question 6 
+
+```{r, include=FALSE}
+hcris_2012$quartile <- ntile(hcris_2012$beds, 4)
+```
+```{r, include=FALSE}
+hcris_2012$quartile_1 <- ifelse(hcris_2012$quartile == 1, 1,0)
+hcris_2012$quartile_2 <- ifelse(hcris_2012$quartile == 2, 1,0)
+hcris_2012$quartile_3 <- ifelse(hcris_2012$quartile == 3, 1,0)
+hcris_2012$quartile_4 <- ifelse(hcris_2012$quartile == 4, 1,0)
+```
+
+```{r, include=FALSE}
+table_6 <- hcris_2012 %>% filter(!is.na(penalty)) %>%
+  group_by(quartile, penalty) %>%
+  summarise(avg_price = mean(est_price, na.rm = TRUE))
+
+```
+```{r, include=FALSE}
+table_6_2 <- pivot_wider(table_6, names_from = penalty, values_from = avg_price, 
+                         names_prefix = "price")
+```
+
+
+```{r, render=lemon_print}
+table_6_2
+```
+
+# Question 7
+
+```{r, include=FALSE}
+m.inv.var <- Matching::Match(Y = hcris_2012$est_price,
+                             Tr = hcris_2012$penalty,
+                             X= hcris_2012 %>% select(quartile_1, quartile_2, quartile_3),
+                             M = 1,
+                             Weight = 1,
+                             estimand = "ATE")
+```
+```{r, include=FALSE}
+summary(m.inv.var)
+```
+
+```{r, include=FALSE}
+m.mahala <- Matching::Match(Y = hcris_2012$est_price, 
+                            Tr = hcris_2012$penalty,
+                            X = hcris_2012 %>% select(quartile_1, quartile_2, quartile_3),
+                            M = 1,
+                            Weight = 2,
+                            estimand = "ATE")
+```
+```{r, include=FALSE}
+summary(m.mahala)
+```
+
+```{r, include=FALSE}
+logit.model <- glm(penalty ~ quartile_1 + quartile_2 + quartile_3,
+                   family = binomial, data = hcris_2012)
+
+ps <- fitted(logit.model)
+```
+```{r, include=FALSE}
+hcris_2012_2 <- hcris_2012 %>%
+  mutate(ipw = case_when(
+    penalty==1 ~ 1/ps,
+    penalty==0 ~ 1/(1-ps),
+    TRUE ~ NA_real_
+  ))
+```
+```{r, include=FALSE}
+mean.t1 <- hcris_2012_2 %>% filter(penalty==1) %>%
+  select(est_price, ipw) %>% summarize(mean_p=weighted.mean(est_price,w=ipw))
+```
+```{r, include=FALSE}
+mean.t0 <- hcris_2012_2 %>% filter(penalty==0) %>%
+  select(est_price, ipw) %>% summarize(mean_p=weighted.mean(est_price,w=ipw))
+```
+```{r, include=FALSE}
+inv.ps<- mean.t1$mean_p - mean.t0$mean_p
+```
+
+```{r, include=FALSE}
+reg1.dat <- hcris_2012 %>% filter(penalty == 1)
+reg1 <- lm(est_price ~ quartile_1 + quartile_2 + quartile_3, data=reg1.dat)
+```
+```{r, include=FALSE}
+reg0.dat <- hcris_2012 %>% filter(penalty == 0)
+reg0 <- lm(est_price ~ quartile_1 + quartile_2 + quartile_3, data=reg0.dat)
+```
+```{r, include=FALSE}
+pred1 <- predict(reg1,new=hcris_2012)
+pred0 <- predict(reg0,new=hcris_2012)
+```
+```{r, include=FALSE}
+reg_res <- mean(pred1-pred0)
+```
+
+```{r, include=FALSE}
+table_ate <- data.frame(Estimators = c("NN Matching, inverse variance", "NN Matching, mahalanobis",
+                                       "Inverse pscore weighting", "Regression"),
+                        ATE = c(m.inv.var$est, m.mahala$est, inv.ps, reg_res))
+```
+```{r, render=lemon_print}
+table_ate
+```
+ 
+
+#Question 8
+
+The results from the different treatment effect estimators are similar. The results using the nearest neighbour matching methods are the same using both inverse variance distance and Mahalanobis distance at 199.5281. The results using inverse propensity weight and regression are more different at 161.7769 and 187.2840 respectively.  
+
+#Question 9
+
+
+
+#Question 10
+Working with this dataset was interesting. I learned more about applying the concepts we learned in class and was able to get more comfortable using R. However, it was confusing at times as I am still unclear about the codes to find ATE and struggled to write the codes to get to the required answers.
+
