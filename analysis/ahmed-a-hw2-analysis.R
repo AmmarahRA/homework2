@@ -23,10 +23,12 @@ medicare_id_table<- final.hcris.data %>% group_by(provider_number) %>% count()
 medicare_id<-nrow(medicare_id_table)
 
 #3
-tot_charges <- final.hcris.data %>% ggplot(aes(x = as.factor(year), y = tot_charges)) +
-  geom_violin(trim = FALSE) +
-  labs(title = 'Distribution of Total Charges', x = 'Year', y = 'Total Charges') +
-  theme_minimal()
+tot_charges <- final.hcris.data %>% ggplot(aes(x = as.factor(year), y = tot_charges, fill = "")) +
+  geom_violin(trim = FALSE) + scale_y_continuous(trans = "log10") +
+  labs(title = 'Distribution of Log of Total Charges', x = 'Year', y = 'Log of Total Charges') +
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 45, size = 9, hjust = 1), plot.title = element_text(hjust = 0.5))
+
 
 #4
 
@@ -83,6 +85,9 @@ hcris_2012$quartile_4 <- ifelse(hcris_2012$quartile == 4, 1,0)
 table_6 <- hcris_2012 %>% filter(!is.na(penalty)) %>%
   group_by(quartile, penalty) %>%
   summarise(avg_price = mean(est_price, na.rm = TRUE))
+
+table_6_2 <- pivot_wider(table_6, names_from = penalty, values_from = avg_price, 
+                         names_prefix = "price")
   
 #7
 
@@ -108,7 +113,7 @@ summary(m.mahala)
 
 #Inverse propensity weighting 
 
-logit.model <- glm(penalty ~ quartile,
+logit.model <- glm(penalty ~ quartile_1 + quartile_2 + quartile_3,
                    family = binomial, data = hcris_2012)
 
 ps <- fitted(logit.model)
@@ -133,7 +138,7 @@ reg1.dat <- hcris_2012 %>% filter(penalty == 1)
 reg1 <- lm(est_price ~ quartile_1 + quartile_2 + quartile_3, data=reg1.dat)
 
 reg0.dat <- hcris_2012 %>% filter(penalty == 0)
-reg0 <- lm(est_price ~ quartile, data=reg0.dat)
+reg0 <- lm(est_price ~ quartile_1 + quartile_2 + quartile_3, data=reg0.dat)
 
 pred1 <- predict(reg1,new=hcris_2012)
 pred0 <- predict(reg0,new=hcris_2012)
