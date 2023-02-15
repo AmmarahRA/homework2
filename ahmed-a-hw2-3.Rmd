@@ -257,7 +257,7 @@ knitr::kable(table_ate,
              col.names=c("Estimate", "ATE"),
              format.args = list(big.mark=","), caption = "Average Treatment Effect",
              booktabs = TRUE) %>%
-  kable_styling(latex_options = c("scale_down", "hold_position"), font_size = 7)
+  kable_styling(latex_options = c("scale_down", "hold_position"))
 ```
  
 
