@@ -2,10 +2,12 @@
 title: 'Homework 2 - Research in Health Economics'
 author: "Ammarah Ahmed"
 date: ""
-output:
-  bookdown:: pdf_document2:
-fig_caption: yes
-toc: false
+header-includes:
+  - \usepackage{booktabs}
+output: 
+  bookdown::pdf_document2:
+    fig_caption: yes
+    toc: false
 ---
 
 ```{r setup, include=FALSE}
@@ -154,19 +156,20 @@ table_6 <- hcris_2012 %>% filter(!is.na(penalty)) %>%
   summarise(avg_price = mean(est_price, na.rm = TRUE))
 
 ```
+```{r, include=FALSE}
+table_6_2 <- pivot_wider(table_6, names_from = penalty, values_from = avg_price, 
+                         names_prefix = "price")
+```
+
+
 ```{r}
 options(knitr.kable.NA = 0)
 knitr::kable(table_6_2, 
              col.names=c("Quartile", "Average Price for Non-Penalised Hospitals", "Average Price for Penalised Hospitals"),
-             format.args = list(big.mark=","), caption = "Average Price for Penalised and Non-Penalised Hospitals")
-```
-
-
-```{r, render=lemon_print}
-options(knitr.kable.NA = 0)
-knitr::kable(table_6, 
-             col.names=c("Quartile", "Penalty", "Average Price"),
-             format.args = list(big.mark=","), caption = "Average Price for Treated and Control Groups")
+             format.args = list(big.mark=","), 
+             caption = "Average Price for Penalised and Non-Penalised Hospitals",
+             booktabs = TRUE) %>%
+  kable_styling(latex_options = c("scale_down", "hold_position"))
 ```
 
 # Question 7
@@ -242,18 +245,22 @@ table_ate <- data.frame(Estimators = c("NN Matching, inverse variance", "NN Matc
                                        "Inverse pscore weighting", "Regression"),
                         ATE = c(m.inv.var$est, m.mahala$est, inv.ps, reg_res))
 ```
-```{r, render=lemon_print}
-table_ate
+
+```{r}
+options(knitr.kable.NA = 0)
+knitr::kable(table_ate, 
+             col.names=c("Estimate", "ATE"),
+             format.args = list(big.mark=","), caption = "Average Treatment Effect")
 ```
  
 
 # Question 8
 
-The results from the different treatment effect estimators are exactly the same at 199.5281.   
+The results from the different treatment effect estimators are exactly the same at 199.5281. This is likely because of the use of dummy variables to define the quartiles based on hospital bed sizes.    
 
 # Question 9
 
-
+I do not think the results here show a causal effect of penalty on price. This is because there could be other factors affecting hospital prices which have not been taken into consideration in this test. 
 
 # Question 10
 
