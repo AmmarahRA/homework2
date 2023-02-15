@@ -43,12 +43,14 @@ multiple_reports<- sum(multiple_reports_table$count)
 
 `r multiple_reports` hospitals filed more than one report per year. 
 
+
 ```{r, include=FALSE}
 fig.mult.rep<- multiple_reports_table %>% ggplot(aes(x = year, y = count)) +
   geom_line() + 
   labs(title = 'Number of Hospitals with Multiple Reports', x = 'Year', y = 'Number of hospitals') +
   theme_minimal()
 ```
+
 
 ```{r}
 fig.mult.rep
@@ -74,6 +76,7 @@ tot_charges <- final.hcris.data %>% ggplot(aes(x = as.factor(year), y = tot_char
   theme_minimal() + 
   theme(axis.text.x = element_text(angle = 45, size = 9, hjust = 1), plot.title = element_text(hjust = 0.5))
 ```
+
 
 ```{r}
 tot_charges
@@ -107,6 +110,7 @@ est_prices<- final.hcris.data2 %>%
   labs(title = 'Distribution of Estimated Prices', x = 'Year', y = 'Estimated Prices') +
   theme_bw()
 ```
+
 
 ```{r}
 est_prices
@@ -246,11 +250,14 @@ table_ate <- data.frame(Estimators = c("NN Matching, inverse variance", "NN Matc
                         ATE = c(m.inv.var$est, m.mahala$est, inv.ps, reg_res))
 ```
 
+
 ```{r}
 options(knitr.kable.NA = 0)
 knitr::kable(table_ate, 
              col.names=c("Estimate", "ATE"),
-             format.args = list(big.mark=","), caption = "Average Treatment Effect")
+             format.args = list(big.mark=","), caption = "Average Treatment Effect",
+             booktabs = TRUE) %>%
+  kable_styling(latex_options = c("scale_down", "hold_position"))
 ```
  
 
