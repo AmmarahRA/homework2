@@ -2,7 +2,10 @@
 title: 'Homework 2 - Research in Health Economics'
 author: "Ammarah Ahmed"
 date: ""
-output: pdf_document 
+output:
+  bookdown:: pdf_document2:
+fig_caption: yes
+toc: false
 ---
 
 ```{r setup, include=FALSE}
@@ -49,7 +52,7 @@ fig.mult.rep<- multiple_reports_table %>% ggplot(aes(x = year, y = count)) +
 fig.mult.rep
 ```
 
-#Question 2
+# Question 2
 
 ```{r, include=FALSE}
 medicare_id_table<- final.hcris.data %>% group_by(provider_number) %>% count() 
@@ -60,7 +63,7 @@ medicare_id<-nrow(medicare_id_table)
 
 There are `r medicare_id` unique Medicare IDs
 
-#Question 3
+# Question 3
 
 ```{r, include=FALSE}
 tot_charges <- final.hcris.data %>% ggplot(aes(x = as.factor(year), y = tot_charges, fill = "")) +
@@ -151,14 +154,19 @@ table_6 <- hcris_2012 %>% filter(!is.na(penalty)) %>%
   summarise(avg_price = mean(est_price, na.rm = TRUE))
 
 ```
-```{r, include=FALSE}
-table_6_2 <- pivot_wider(table_6, names_from = penalty, values_from = avg_price, 
-                         names_prefix = "price")
+```{r}
+options(knitr.kable.NA = 0)
+knitr::kable(table_6_2, 
+             col.names=c("Quartile", "Average Price for Non-Penalised Hospitals", "Average Price for Penalised Hospitals"),
+             format.args = list(big.mark=","), caption = "Average Price for Penalised and Non-Penalised Hospitals")
 ```
 
 
 ```{r, render=lemon_print}
-table_6_2
+options(knitr.kable.NA = 0)
+knitr::kable(table_6, 
+             col.names=c("Quartile", "Penalty", "Average Price"),
+             format.args = list(big.mark=","), caption = "Average Price for Treated and Control Groups")
 ```
 
 # Question 7
@@ -239,14 +247,15 @@ table_ate
 ```
  
 
-#Question 8
+# Question 8
 
-The results from the different treatment effect estimators are similar. The results using the nearest neighbour matching methods are the same using both inverse variance distance and Mahalanobis distance at 199.5281. The results using inverse propensity weight and regression are more different at 161.7769 and 187.2840 respectively.  
+The results from the different treatment effect estimators are exactly the same at 199.5281.   
 
-#Question 9
+# Question 9
 
 
 
-#Question 10
+# Question 10
+
 Working with this dataset was interesting. I learned more about applying the concepts we learned in class and was able to get more comfortable using R. However, it was confusing at times as I am still unclear about the codes to find ATE and struggled to write the codes to get to the required answers.
 
