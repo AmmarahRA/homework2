@@ -58,7 +58,7 @@ medicare_id_table<- final.hcris.data %>% group_by(provider_number) %>% count()
 medicare_id<-nrow(medicare_id_table)
 ```
 
-There are `r medicare-id` unique Medicare IDs
+There are `r medicare_id` unique Medicare IDs
 
 #Question 3
 
